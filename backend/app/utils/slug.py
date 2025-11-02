@@ -1,4 +1,4 @@
-rom slugify import slugify
+from slugify import slugify
 from sqlalchemy.orm import Session
 from typing import Type
 from app.core.database import Base

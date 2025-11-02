@@ -20,8 +20,15 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
             slug = f"{base_slug}-{counter}"
             counter += 1
         
+        # Convert enum fields to strings
+        event_data = obj_in.dict()
+        if 'category' in event_data and isinstance(event_data['category'], EventCategory):
+            event_data['category'] = event_data['category'].value
+        if 'status' in event_data and isinstance(event_data['status'], EventStatus):
+            event_data['status'] = event_data['status'].value
+        
         db_obj = Event(
-            **obj_in.dict(),
+            **event_data,
             slug=slug
         )
         db.add(db_obj)
@@ -46,11 +53,15 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         query = db.query(Event)
         
         if category:
-            query = query.filter(Event.category == category)
+            # Convert enum to lowercase string for comparison
+            category_val = category.value if isinstance(category, EventCategory) else str(category).lower()
+            query = query.filter(Event.category.ilike(category_val))
         if city:
-            query = query.filter(Event.city == city)
+            query = query.filter(Event.city.ilike(f"%{city}%"))
         if status:
-            query = query.filter(Event.status == status)
+            # Convert enum to lowercase string for comparison
+            status_val = status.value if isinstance(status, EventStatus) else str(status).lower()
+            query = query.filter(Event.status.ilike(status_val))
         if is_featured is not None:
             query = query.filter(Event.is_featured == is_featured)
         if from_date:
@@ -82,11 +93,15 @@ class CRUDEvent(CRUDBase[Event, EventCreate, EventUpdate]):
         query = db.query(Event)
         
         if category:
-            query = query.filter(Event.category == category)
+            # Convert enum to lowercase string for comparison
+            category_val = category.value if isinstance(category, EventCategory) else str(category).lower()
+            query = query.filter(Event.category.ilike(category_val))
         if city:
-            query = query.filter(Event.city == city)
+            query = query.filter(Event.city.ilike(f"%{city}%"))
         if status:
-            query = query.filter(Event.status == status)
+            # Convert enum to lowercase string for comparison
+            status_val = status.value if isinstance(status, EventStatus) else str(status).lower()
+            query = query.filter(Event.status.ilike(status_val))
         if is_featured is not None:
             query = query.filter(Event.is_featured == is_featured)
         if from_date:

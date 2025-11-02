@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, model_validator
 from typing import Optional, List
 from datetime import date, time, datetime
 from app.models.event import EventCategory, EventStatus
@@ -53,6 +53,23 @@ class EventResponse(EventBase):
     created_at: datetime
     updated_at: datetime
     
+    @model_validator(mode="before")
+    @classmethod
+    def convert_enums(cls, data):
+        """Convert string category/status to enum for response"""
+        if isinstance(data, dict):
+            if "category" in data and isinstance(data["category"], str):
+                try:
+                    data["category"] = EventCategory(data["category"].lower())
+                except ValueError:
+                    data["category"] = EventCategory.OTHER
+            if "status" in data and isinstance(data["status"], str):
+                try:
+                    data["status"] = EventStatus(data["status"].lower())
+                except ValueError:
+                    data["status"] = EventStatus.DRAFT
+        return data
+    
     class Config:
         from_attributes = True
 
@@ -70,6 +87,23 @@ class EventList(BaseModel):
     is_featured: bool
     tickets_sold: int
     total_capacity: int
+    
+    @model_validator(mode="before")
+    @classmethod
+    def convert_enums(cls, data):
+        """Convert string category/status to enum for response"""
+        if isinstance(data, dict):
+            if "category" in data and isinstance(data["category"], str):
+                try:
+                    data["category"] = EventCategory(data["category"].lower())
+                except ValueError:
+                    data["category"] = EventCategory.OTHER
+            if "status" in data and isinstance(data["status"], str):
+                try:
+                    data["status"] = EventStatus(data["status"].lower())
+                except ValueError:
+                    data["status"] = EventStatus.PUBLISHED
+        return data
     
     class Config:
         from_attributes = True

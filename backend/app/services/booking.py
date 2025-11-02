@@ -1,14 +1,14 @@
-from typing import List, Tuple
+from typing import List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from decimal import Decimal
-from app.models.order import Order, OrderItem, OrderStatus, PaymentStatus
+from app.models.order import Order, OrderStatus, PaymentStatus
+from app.models.order_item import OrderItem
 from app.models.ticket import Ticket, TicketStatus
 from app.models.event import Event
 from app.models.ticket_type import TicketType
 from app.models.seat import Seat, SeatStatus
 from app.schemas.order import OrderCreate, OrderItemCreate
-from app.crud.order import order as order_crud
 from app.crud.ticket import ticket as ticket_crud
 from app.crud.ticket_type import ticket_type as ticket_type_crud
 from app.crud.seat import seat as seat_crud
@@ -101,9 +101,9 @@ class BookingService:
             customer_phone=order_in.customer_phone,
             subtotal=subtotal,
             total_amount=subtotal,
-            payment_method=order_in.payment_method,
-            payment_status=PaymentStatus.PENDING,
-            order_status=OrderStatus.PENDING,
+            payment_method=order_in.payment_method.value if hasattr(order_in.payment_method, 'value') else str(order_in.payment_method).lower() if order_in.payment_method else "credit_card",
+            payment_status=PaymentStatus.PENDING.value,
+            order_status=OrderStatus.PENDING.value,
             notes=order_in.notes
         )
         db.add(order)
@@ -170,7 +170,8 @@ class BookingService:
                 detail="Order not found"
             )
         
-        if order.order_status == OrderStatus.CANCELLED:
+        order_status_val = order.order_status if isinstance(order.order_status, str) else (order.order_status.value if hasattr(order.order_status, 'value') else str(order.order_status))
+        if order_status_val.lower() == OrderStatus.CANCELLED.value.lower():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Order already cancelled"
@@ -205,8 +206,8 @@ class BookingService:
             event.tickets_sold -= total_quantity
         
         # Update order status
-        order.order_status = OrderStatus.CANCELLED
-        order.payment_status = PaymentStatus.CANCELLED
+        order.order_status = OrderStatus.CANCELLED.value
+        order.payment_status = PaymentStatus.CANCELLED.value
         
         db.commit()
         db.refresh(order)

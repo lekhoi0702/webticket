@@ -24,12 +24,13 @@ class CRUDOrder(CRUDBase[Order, OrderCreate, dict]):
     ) -> Optional[Order]:
         order = db.query(Order).filter(Order.order_id == order_id).first()
         if order:
-            order.payment_status = status
+            status_val = status.value if isinstance(status, PaymentStatus) else str(status).lower()
+            order.payment_status = status_val
             if transaction_id:
                 order.transaction_id = transaction_id
-            if status == PaymentStatus.COMPLETED:
+            if status_val.lower() == PaymentStatus.COMPLETED.value.lower():
                 order.paid_at = datetime.utcnow()
-                order.order_status = OrderStatus.CONFIRMED
+                order.order_status = OrderStatus.CONFIRMED.value
             db.commit()
             db.refresh(order)
         return order
@@ -37,8 +38,8 @@ class CRUDOrder(CRUDBase[Order, OrderCreate, dict]):
     def cancel_order(self, db: Session, *, order_id: int) -> Optional[Order]:
         order = db.query(Order).filter(Order.order_id == order_id).first()
         if order:
-            order.order_status = OrderStatus.CANCELLED
-            order.payment_status = PaymentStatus.CANCELLED
+            order.order_status = OrderStatus.CANCELLED.value
+            order.payment_status = PaymentStatus.CANCELLED.value
             db.commit()
             db.refresh(order)
         return order

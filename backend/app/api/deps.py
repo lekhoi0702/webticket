@@ -46,7 +46,8 @@ def get_current_active_user(
     current_user: User = Depends(get_current_user)
 ) -> User:
     """Get current active user"""
-    if current_user.status != UserStatus.ACTIVE:
+    status_val = current_user.status if isinstance(current_user.status, str) else (current_user.status.value if hasattr(current_user.status, 'value') else str(current_user.status))
+    if status_val.lower() != UserStatus.ACTIVE.value.lower():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Inactive user"
@@ -57,7 +58,8 @@ def require_admin(
     current_user: User = Depends(get_current_active_user)
 ) -> User:
     """Require admin role"""
-    if current_user.role != UserRole.ADMIN:
+    role_val = current_user.role if isinstance(current_user.role, str) else (current_user.role.value if hasattr(current_user.role, 'value') else str(current_user.role))
+    if role_val.lower() != UserRole.admin.value.lower():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
